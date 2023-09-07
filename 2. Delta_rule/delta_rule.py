@@ -46,10 +46,10 @@ class Neural:
         print(final_answer)
 
         if final_answer > 0:
-            print('Ответ: Cистема охлаждения установлена')
+            print('Ответ: 1')
 
         else:
-            print('Ответ: Система охлаждения не установлена')
+            print('Ответ: -1')
 
 
 def random_weight(lens):
