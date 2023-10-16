@@ -1,3 +1,4 @@
+import math
 import random
 
 
@@ -34,8 +35,9 @@ def line_by_line_output(x):
 
 def get_architecture():
     configuration = [
-        15,  # number of neurons of the first layer
-        2  # number of neurons of the out layer
+        3,
+        12,
+        1
     ]
     print(f'Изначальная архетектура')
     line_by_line_output(configuration)
@@ -92,19 +94,22 @@ class Neural_network:
                 else:
                     return
 
+    def sigmoid(self, x):
+        for i, ii in enumerate(x):
+            x[i] = 1 / (1 + math.e**(-x[i]))
+        return x
+
     def train_V2(self):
         data_out = []
         for self.index_data, self.data_X in enumerate(self.xtrain):  # по всем данным
             for self.index_layer, self.layer in enumerate(self.weight):  # по слою нейронов
-
                 if self.index_layer == 0:
                     data_out = self.learn_layer(self.data_X)
                 else:
                     self.learn_layer(data_out)
+                data_out = self.sigmoid(data_out)
 
-                data_out = self.iconic_activation_function(data_out)
 
-                self.stop_lern(data_out)
 
     # def train(self):
     #     c = 0  # Счетчик эпох обучения
@@ -161,6 +166,9 @@ def random_weight(lens):
         mass_weigh.append(round(random.uniform(0, 1), 5))
     return mass_weigh
 
+# def random():
+#     for i in range(x):
+#         print('pensil')
 
 if __name__ == '__main__':
     error = 0.3

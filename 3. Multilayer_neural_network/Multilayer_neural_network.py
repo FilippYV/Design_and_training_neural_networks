@@ -106,7 +106,6 @@ class Neural_network:
 
                 self.stop_lern(data_out)
 
-
     # Метод для запуска нейрона с новыми входными данными
     def start(self, new_value):
         print('\nВеса -', self.weight)
