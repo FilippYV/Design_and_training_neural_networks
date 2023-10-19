@@ -21,6 +21,7 @@ class Neural:
             self.summ_to_active = 0
 
             # Суммирование взвешенных входных данных
+
             for i in range(len(self.inputs[count])):
                 self.summ_to_active += self.inputs[count][i] * self.weight[i]
             self.summ_to_active -= self.t

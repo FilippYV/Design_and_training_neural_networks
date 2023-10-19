@@ -1,14 +1,17 @@
 import math
 import random
 from icecream import ic
+import pandas as pd
 
 
 def get_dataset():
     # Входные данные (матрица)
-    X_train = [[-1, 1, -1, -1, 1, -1, -1, 1, -1, -1, 1, -1, -1, 1, -1],
-               [1, 1, 1, 1, -1, 1, 1, -1, 1, 1, -1, 1, 1, 1, 1]]
+    X_train = [[1, 0, 0, 1],
+               [1, 1, 1, 1],
+               [0, 0, 0, 0],
+               [0, 1, 1, 0]]
     # Ожидаемые ответы
-    Y_train = [[1, -1], [-1, 1]]
+    Y_train = []
     return X_train, Y_train
 
 
@@ -96,57 +99,52 @@ class Neural_network:
 
     def sigmoid(self, x):
         for i, ii in enumerate(x):
-            x[i] = 1 / (1 + math.e**(-x[i]))
+            x[i] = 1 / (1 + math.e ** (-x[i]))
         return x
 
+    def weight_update(self, d2, data):
+        ic(d2)
+        neuron_answers = [d2.index(max(d2)), max(d2)]
+        ic(self.weight)
+        ic(neuron_answers)
+        for index_w, data_w in enumerate(self.weight[0][neuron_answers[0]]):
+            self.weight[0][neuron_answers[0]][index_w] += self.learning_rate + data[index_w] - data_w
+            self.weight[0][neuron_answers[0]][index_w] = round(self.weight[0][neuron_answers[0]][index_w], 2)
+        ic(self.weight)
 
     def train_km(self):
-        data_out = []
-        for i, ii in enumerate(self.data_X):
-            
-        for self.index_data, self.data_X in enumerate(self.xtrain):  # по всем данным
-            for self.index_layer, self.layer in enumerate(self.weight):  # по слою нейронов
+        for eph in range(self.epochs):
+            for index_x, data_x in enumerate(self.xtrain):
+                data_out = []
+                ic(index_x, data_x)
+                for index_w, data_w in enumerate(self.weight[0]):
+                    # print(index_w)
+                    ic(index_w, data_w)
+                    summ = 0
+                    for _ in range(len(data_x)):
+                        summ += (data_w[_] - data_x[_]) ** 2
+                    # print(summ)
+                    data_out.append(summ)
+                    # print(summ)
+                # print()
+                ic(data_out)
+                self.weight_update(data_out, data_x)
 
-
-    def train_V2(self):
-        data_out = []
-        for self.index_data, self.data_X in enumerate(self.xtrain):  # по всем данным
-            for self.index_layer, self.layer in enumerate(self.weight):  # по слою нейронов
-                if self.index_layer == 0:
-                    data_out = self.learn_layer(self.data_X)
-                else:
-                    self.learn_layer(data_out)
-                data_out = self.sigmoid(data_out)
-
-
-
-    # def train(self):
-    #     c = 0  # Счетчик эпох обучения
-    #     count = 0  # Счетчик для перебора входных данных
-    #     while count != len(self.xtrain):
-    #         c += 1
-    #         self.summ_to_active = 0
-    #
-    #         # Суммирование взвешенных входных данных
-    #         for i in range(len(self.xtrain[count])):
-    #             self.summ_to_active += self.xtrain[count][i] * self.weight[i]
-    #         self.summ_to_active -= self.t
-    #
-    #         # Активация нейрона (пороговая функция)
-    #         if self.summ_to_active > 0:
-    #             self.summ_to_active = 1
-    #         else:
-    #             self.summ_to_active = -1
-    #
-    #         # Проверка на ошибку и коррекция весов
-    #         if self.summ_to_active != self.answers[count]:
-    #             for i in range(len(self.weight)):
-    #                 self.weight[i] = round(self.weight[i] + self.xtrain[count][i] * self.answers[count], 5)
-    #             self.t = self.t - self.answers[count]
-    #             count = 0
-    #         else:
-    #             count += 1
-    #     print(f'Эпох -', c)
+    def pred_km(self, data):
+        print(f'Веса: {self.weight[0]}')
+        for index_x, data_x in enumerate(data):
+            data_out = []
+            # ic(index_x, data_x)
+            for index_w, data_w in enumerate(self.weight[0]):
+                # print(index_w)
+                # ic(index_w, data_w)
+                summ = 0
+                for _ in range(len(data_x)):
+                    summ += (data_w[_] - data_x[_]) ** 2
+                # print(summ)
+                data_out.append(summ)
+            neuron_answers = [data_out.index(max(data_out)), max(data_out)]
+            print(f'Данные: {data_x} \nОтвет: {neuron_answers}')
 
     # Метод для запуска нейрона с новыми входными данными
     def start(self, new_value):
@@ -175,26 +173,26 @@ def random_weight(lens):
         mass_weigh.append(round(random.uniform(0, 1), 5))
     return mass_weigh
 
+
 # def random():
 #     for i in range(x):
 #         print('pensil')
 
 if __name__ == '__main__':
     error = 0.3
-    learning_rate = 0.1
-    epochs = 100
+    learning_rate = 0.2
+    epochs = 10
 
     X_train, Y_train = get_dataset()  # Получаем тренировочные данные
     config = get_architecture()  # Получаем конфигурацию нейронной сети
     weight = get_and_generate_weight(config)  # Получаем веса нейронной сети
 
-    ic(weight)
-
-
+    # ic(weight)
 
     # Создание экземпляра сети
     brain = Neural_network(X_train, Y_train, weight, learning_rate, error, epochs, config)
+    # Обучаем нейросеть
     brain.train_km()
 
     # Запуск нейрона с новыми входными данными
-    brain.start([1, 1, 1, 1, -1, 1, 1, -1, 1, 1, -1, 1, 1, 1, 1])
+    brain.pred_km([[1, 1, 1, 1], [0, 0, 0, 0]])
