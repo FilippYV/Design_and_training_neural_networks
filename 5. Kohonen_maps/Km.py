@@ -6,10 +6,14 @@ import pandas as pd
 
 def get_dataset():
     # Входные данные (матрица)
-    X_train = [[1, 0, 0, 1],
-               [1, 1, 1, 1],
-               [0, 0, 0, 0],
-               [0, 1, 1, 0]]
+    X_train = [[0, 0],
+               [0, 1],
+               [1, 0],
+               [1, 1]]
+    # X_train = [[1, 0, 0, 1],
+    #            [1, 1, 1, 1],
+    #            [0, 0, 0, 0],
+    #            [0, 1, 1, 0]]
     # Ожидаемые ответы
     Y_train = []
     return X_train, Y_train
@@ -39,7 +43,7 @@ def line_by_line_output(x):
 
 def get_architecture():
     configuration = [
-        4,
+        2,
         2
     ]
     print(f'Изначальная архетектура')
@@ -103,23 +107,23 @@ class Neural_network:
         return x
 
     def weight_update(self, d2, data):
-        ic(d2)
+        # ic(d2)
         neuron_answers = [d2.index(max(d2)), max(d2)]
-        ic(self.weight)
-        ic(neuron_answers)
+        # ic(self.weight)
+        # ic(neuron_answers)
         for index_w, data_w in enumerate(self.weight[0][neuron_answers[0]]):
-            self.weight[0][neuron_answers[0]][index_w] += self.learning_rate + data[index_w] - data_w
+            self.weight[0][neuron_answers[0]][index_w] += self.learning_rate * (data[index_w] - data_w)
             self.weight[0][neuron_answers[0]][index_w] = round(self.weight[0][neuron_answers[0]][index_w], 2)
-        ic(self.weight)
+        # ic(self.weight)
 
     def train_km(self):
         for eph in range(self.epochs):
             for index_x, data_x in enumerate(self.xtrain):
                 data_out = []
-                ic(index_x, data_x)
+                # ic(index_x, data_x)
                 for index_w, data_w in enumerate(self.weight[0]):
                     # print(index_w)
-                    ic(index_w, data_w)
+                    # ic(index_w, data_w)
                     summ = 0
                     for _ in range(len(data_x)):
                         summ += (data_w[_] - data_x[_]) ** 2
@@ -127,7 +131,7 @@ class Neural_network:
                     data_out.append(summ)
                     # print(summ)
                 # print()
-                ic(data_out)
+                # ic(data_out)
                 self.weight_update(data_out, data_x)
 
     def pred_km(self, data):
@@ -145,6 +149,7 @@ class Neural_network:
                 data_out.append(summ)
             neuron_answers = [data_out.index(max(data_out)), max(data_out)]
             print(f'Данные: {data_x} \nОтвет: {neuron_answers}')
+            print()
 
     # Метод для запуска нейрона с новыми входными данными
     def start(self, new_value):
@@ -180,7 +185,7 @@ def random_weight(lens):
 
 if __name__ == '__main__':
     error = 0.3
-    learning_rate = 0.2
+    learning_rate = 0.1
     epochs = 10
 
     X_train, Y_train = get_dataset()  # Получаем тренировочные данные
@@ -195,4 +200,4 @@ if __name__ == '__main__':
     brain.train_km()
 
     # Запуск нейрона с новыми входными данными
-    brain.pred_km([[1, 1, 1, 1], [0, 0, 0, 0]])
+    brain.pred_km([[1, 1], [0, 0], [0, 1], [1, 0]])
