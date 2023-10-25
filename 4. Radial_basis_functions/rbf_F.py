@@ -1,34 +1,45 @@
-import random
 import numpy as np
+from icecream import ic
 
-def rbf(x, c, sigma):
-    return np.exp(-(x - c)**2 / (2 * sigma**2))
+class RBFNetwork:
+    def __init__(self, num_input, num_hidden, num_output):
+        self.num_input = num_input
+        self.num_hidden = num_hidden
+        self.num_output = num_output
+        self.centers = None
+        self.widths = None
+        self.weights = None
 
-def train_rbf(x_train, y_train, n_centers, sigma):
-    c = []
-    for _ in range(n_centers):
-        c.append((x_train[random.randint(0, len(x_train))], random.random()))
-    w = np.ones(n_centers)
+    def _calculate_rbf(self, X, centers, widths):
+        return np.exp(-((X - centers) ** 2).sum(axis=1) / widths)
 
-    for i in range(len(x_train)):
-        for j in range(n_centers):
-            w[j] += rbf(x_train[i], c[j], sigma) * y_train[i]
+    def fit(self, X, y, learning_rate=0.1, epochs=100):
+        self.centers = X[np.random.choice(X.shape[0], self.num_hidden, replace=False)]
+        self.widths = np.ones(self.num_hidden)
+        self.weights = np.random.rand(self.num_hidden, self.num_output)
 
-    return c, w
+        for _ in range(epochs):
+            for i in range(X.shape[0]):
+                rbf_layer_output = self._calculate_rbf(X[i], self.centers, self.widths)
+                output = np.dot(rbf_layer_output, self.weights)
+                error = y[i] - output
+                self.weights += learning_rate * np.outer(rbf_layer_output, error)
 
-def predict_rbf(x_test, c, w):
-    y_pred = []
-    for x in x_test:
-        y_pred.append(sum(w[j] * rbf(x, c[j], sigma) for j in range(len(w))))
-    return y_pred
+    def predict(self, X):
+        predictions = []
+        for i in range(X.shape[0]):
+            rbf_layer_output = self._calculate_rbf(X[i], self.centers, self.widths)
+            output = np.dot(rbf_layer_output, self.weights)
+            predictions.append(output)
+        return np.array(predictions)
 
-x_train = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
-y_train = [1, 1, 1, -1, -1]
-
-c, w = train_rbf(x_train, y_train, 2, 1)
-
-x_test = [[-1, -1], [-2, -2], [11, 12], [13, 14]]
-y_pred = predict_rbf(x_test, c, w)
-
-print(c, w)
-print(y_pred)
+# Пример использования
+np.random.seed(0)
+X = np.random.rand(100, 2)  # Пример входных данных
+y = np.random.rand(100, 1)  # Пример выходных данных
+ic(X)
+ic(y)
+rbf_network = RBFNetwork(num_input=2, num_hidden=5, num_output=1)
+rbf_network.fit(X, y, learning_rate=0.1, epochs=100)
+predictions = rbf_network.predict(X)
+print(predictions)
