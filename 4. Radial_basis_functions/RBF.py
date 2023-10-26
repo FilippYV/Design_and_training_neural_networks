@@ -1,51 +1,76 @@
 import numpy as np
+import pandas as pd
+from icecream import ic
 
-# Определяем радиальные базисные функции
-def gaussian_rbf(x, c, s):
-    return np.exp(-1 / (2 * s**2) * (x-c)**2)
 
-# Определяем класс RBFNetwork
+# Определение функции RBF
+def rbf_function(x, c, s):
+    return np.exp(-1 / (2 * s ** 2) * (x - c) ** 2)
+
+
+# Класс RBF сети
 class RBFNetwork:
-    def __init__(self, k, lr=0.01, epochs=100):
-        self.k = k  # Количество центров
-        self.lr = lr  # Скорость обучения
-        self.epochs = epochs  # Количество эпох
-        self.centers = None
-        self.weights = None
+    def __init__(self, k, learning_rate, epochs):
+        self.k = k
+        self.learning_rate = learning_rate
+        self.epochs = epochs
 
     def fit(self, X, y):
-        # Выбираем случайные центры из обучающих данных
-        self.centers = np.random.choice(X, size=self.k)
-        # Вычисляем ширину как среднее расстояние между центрами
-        s = np.mean(np.abs(self.centers[1:] - self.centers[:-1]))
-
-        # Вычисляем матрицу радиальных базисных функций
-        X_rbf = np.array([gaussian_rbf(x, self.centers, s) for x in X])
-
-        # Инициализируем случайные веса
+        self.centers = X[np.random.choice(X.shape[0], self.k, replace=False)]
+        self.sigma = np.mean(np.std(X, axis=0))
         self.weights = np.random.rand(self.k)
+        for epoch in range(self.epochs):
+            for i in range(X.shape[0]):
+                distances = np.linalg.norm(X[i] - self.centers, axis=1)
+                phi = rbf_function(distances, 0, self.sigma)
 
-        # Обучаем RBF-сеть
-        for _ in range(self.epochs):
-            for i in range(len(X)):
-                output = X_rbf[i].dot(self.weights)
-                error = y[i] - output
-                self.weights += self.lr * error * X_rbf[i]
+                prediction = phi.dot(self.weights)
+                self.weights += self.learning_rate * (y[i] - prediction) * phi
 
     def predict(self, X):
-        s = np.mean(np.abs(self.centers[1:] - self.centers[:-1]))
-        X_rbf = np.array([gaussian_rbf(x, self.centers, s) for x in X])
-        return X_rbf.dot(self.weights)
+        y_pred = []
+        for i in range(X.shape[0]):
+            distances = np.linalg.norm(X[i] - self.centers, axis=1)
+            phi = rbf_function(distances, 0, self.sigma)
+            prediction = phi.dot(self.weights)
+            y_pred.append(prediction)
+        return y_pred
 
-# Создаем пример обучающих данных
-X = np.linspace(0, 2*np.pi, 100)
-y = np.sin(X)
 
-# Создаем и обучаем RBF-сеть
-rbf = RBFNetwork(k=20, lr=0.01, epochs=100)
-rbf.fit(X, y)
+# Загрузка данных
+data = pd.read_csv('../Datasets/For_RBF/iris.csv')
+new_data = pd.read_csv('../Datasets/For_RBF/test_iris.csv')
 
-# Предсказываем значения для новых данных
-X_new = np.linspace(0, 2*np.pi, 100)
-predictions = rbf.predict(X_new)
-print(predictions)
+# Подготовка данных
+X = data.iloc[:, 1:5].values
+y = data.iloc[:, 4].values
+ic(X)
+ic(y)
+
+# Преобразование меток классов в числовые значения
+from sklearn.preprocessing import LabelEncoder
+
+le = LabelEncoder()
+y = le.fit_transform(y)
+
+ic(y)
+
+# Создание и обучение RBF сети
+rbf_network = RBFNetwork(k=3, learning_rate=0.1, epochs=100)
+rbf_network.fit(X, y)
+
+# Пример предсказания
+example = data.iloc[:, 1:5].values
+
+
+y_test = pd.read_csv('../Datasets/For_RBF/test_iris.csv')
+y_test = y_test.iloc[:, 5:6].values
+le = LabelEncoder()
+y_test = le.fit_transform(y_test)
+ic(y_test)
+
+y_pred = rbf_network.predict(example)
+
+
+
+print("Prediction: ", y_pred)
