@@ -1,45 +1,46 @@
 import numpy as np
-from icecream import ic
+import random
 
-class RBFNetwork:
-    def __init__(self, num_input, num_hidden, num_output):
-        self.num_input = num_input
-        self.num_hidden = num_hidden
-        self.num_output = num_output
-        self.centers = None
-        self.widths = None
-        self.weights = None
+# Реализация сети RBF для кластеризации данных
+class RBFNetworkClustering:
+    def __init__(self, input_dim, hidden_dim, output_dim, learning_rate, epochs):
+        self.input_dim = input_dim
+        self.hidden_dim = hidden_dim
+        self.output_dim = output_dim
+        self.learning_rate = learning_rate
+        self.epochs = epochs
+        self.centers = [np.random.uniform(-1, 1, input_dim) for _ in range(hidden_dim)]
+        self.width = np.mean([np.linalg.norm(self.centers[i] - self.centers[j]) for i in range(hidden_dim) for j in range(hidden_dim)])
 
-    def _calculate_rbf(self, X, centers, widths):
-        return np.exp(-((X - centers) ** 2).sum(axis=1) / widths)
+        self.weights = np.random.random((hidden_dim, output_dim))
 
-    def fit(self, X, y, learning_rate=0.1, epochs=100):
-        self.centers = X[np.random.choice(X.shape[0], self.num_hidden, replace=False)]
-        self.widths = np.ones(self.num_hidden)
-        self.weights = np.random.rand(self.num_hidden, self.num_output)
+    def radial_basis_function(self, x, c, width):
+        return np.exp(-np.linalg.norm(x-c)**2 / (2*width**2))
 
-        for _ in range(epochs):
-            for i in range(X.shape[0]):
-                rbf_layer_output = self._calculate_rbf(X[i], self.centers, self.widths)
-                output = np.dot(rbf_layer_output, self.weights)
-                error = y[i] - output
-                self.weights += learning_rate * np.outer(rbf_layer_output, error)
+    def hidden_layer_output(self, X):
+        G = np.zeros((X.shape[0], self.hidden_dim), float)
+        for i in range(X.shape[0]):
+            for j in range(self.hidden_dim):
+                G[i, j] = self.radial_basis_function(X[i], self.centers[j], self.width)
+        return G
+
+    def train(self, X):
+        for epoch in range(self.epochs):
+            G = self.hidden_layer_output(X)
+            self.weights = np.dot(np.linalg.pinv(G), X)
 
     def predict(self, X):
-        predictions = []
-        for i in range(X.shape[0]):
-            rbf_layer_output = self._calculate_rbf(X[i], self.centers, self.widths)
-            output = np.dot(rbf_layer_output, self.weights)
-            predictions.append(output)
-        return np.array(predictions)
+        G = self.hidden_layer_output(X)
+        return np.dot(G, self.weights)
 
-# Пример использования
-np.random.seed(0)
-X = np.random.rand(100, 2)  # Пример входных данных
-y = np.random.rand(100, 1)  # Пример выходных данных
-ic(X)
-ic(y)
-rbf_network = RBFNetwork(num_input=2, num_hidden=5, num_output=1)
-rbf_network.fit(X, y, learning_rate=0.1, epochs=100)
-predictions = rbf_network.predict(X)
-print(predictions)
+# Пример использования для кластеризации данных
+if __name__ == '__main__':
+    # Генерируем данные для примера
+    data = np.random.rand(100, 2)
+
+    rbf_network = RBFNetworkClustering(input_dim=2, hidden_dim=5, output_dim=2, learning_rate=0.1, epochs=100)
+    rbf_network.train(data)
+
+    clusters = rbf_network.predict(data)
+    print("Clusters:", clusters)
+
