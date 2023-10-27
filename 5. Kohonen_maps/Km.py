@@ -63,7 +63,48 @@ class Neural_network:
         self.t = 0  # Порог (threshold) для активации нейрона
         self.config = config  # Конфигурация нейронной сети
 
+    # wij (t+1) = wij (t) + ηxi ej
+    # Метод для обучения нейрона
 
+    # обучение слоя
+    def learn_layer(self, data):
+        data_out = [0] * len(self.layer)  # на следующем слою нейронов
+        for j, jj in enumerate(self.layer):
+            for d, dd in enumerate(data):
+                data_out[j] += self.weight[self.index_layer][j][d] * dd
+        print(data_out)  # данные после слоя
+        return data_out
+
+    def iconic_activation_function(self, x):
+        for i, ii in enumerate(x):
+            if ii > 0:
+                x[i] = 1
+            else:
+                x[i] = -1
+        return x
+
+    def new_weight_delta_rule(self, data, data_out):
+        print(self.weight[self.index_layer])
+        for j, jj in enumerate(self.layer):
+            for d, dd in enumerate(data):
+                print(self.learning_rate, self.answers[self.index_data][j], data_out[j], dd)
+                print("self.learning_rate, self.answers[self.index_data][j], data_out[j], dd")
+                self.weight[self.index_layer][j][d] += self.learning_rate * \
+                                                       (self.answers[self.index_data][j] - data_out[j]) * dd
+        print(self.weight[self.index_layer])
+
+    def stop_lern(self, data_out):
+        for i, ii in enumerate(data_out):
+            for j in range(ii):
+                if abs(self.answers[j] - self.index_data[j]) >= self.error:
+                    return self.new_weight_delta_rule(self.data_X, data_out)
+                else:
+                    return
+
+    def sigmoid(self, x):
+        for i, ii in enumerate(x):
+            x[i] = 1 / (1 + math.e ** (-x[i]))
+        return x
 
     def weight_update(self, d2, data):
         # ic(d2)
@@ -138,6 +179,9 @@ def random_weight(lens):
     return mass_weigh
 
 
+# def random():
+#     for i in range(x):
+#         print('pensil')
 
 if __name__ == '__main__':
     error = 0.3
