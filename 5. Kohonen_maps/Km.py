@@ -63,70 +63,35 @@ class Neural_network:
         self.t = 0  # Порог (threshold) для активации нейрона
         self.config = config  # Конфигурация нейронной сети
 
-
     def weight_update(self, d2, data):
-        # ic(d2)
         neuron_answers = [d2.index(max(d2)), max(d2)]
-        # ic(self.weight)
-        # ic(neuron_answers)
         for index_w, data_w in enumerate(self.weight[0][neuron_answers[0]]):
             self.weight[0][neuron_answers[0]][index_w] += self.learning_rate * (data[index_w] - data_w)
             self.weight[0][neuron_answers[0]][index_w] = round(self.weight[0][neuron_answers[0]][index_w], 2)
-        # ic(self.weight)
 
     def train_km(self):
         for eph in range(self.epochs):
             for index_x, data_x in enumerate(self.xtrain):
                 data_out = []
-                # ic(index_x, data_x)
                 for index_w, data_w in enumerate(self.weight[0]):
-                    # print(index_w)
-                    # ic(index_w, data_w)
                     summ = 0
                     for _ in range(len(data_x)):
                         summ += (data_w[_] - data_x[_]) ** 2
-                    # print(summ)
                     data_out.append(summ)
-                    # print(summ)
-                # print()
-                # ic(data_out)
                 self.weight_update(data_out, data_x)
 
     def pred_km(self, data):
         print(f'Веса: {self.weight[0]}')
         for index_x, data_x in enumerate(data):
             data_out = []
-            # ic(index_x, data_x)
             for index_w, data_w in enumerate(self.weight[0]):
-                # print(index_w)
-                # ic(index_w, data_w)
                 summ = 0
                 for _ in range(len(data_x)):
                     summ += (data_w[_] - data_x[_]) ** 2
-                # print(summ)
                 data_out.append(summ)
             neuron_answers = [data_out.index(max(data_out)), max(data_out)]
             print(f'Данные: {data_x} \nОтвет: {neuron_answers}')
             print()
-
-    # Метод для запуска нейрона с новыми входными данными
-    def start(self, new_value):
-        print('\nВеса -', self.weight)
-
-        final_answer = 0 * len(self.answers[0])
-        # Вычисление выходного значения
-        for i in range(len(new_value)):
-            for j in range(len(weight)):
-                for k in range(len(weight[j])):
-                    final_answer[k] += new_value[i] * self.weight[j][k][i]
-        # final_answer -= self.t
-        print(final_answer)
-
-        # Определение ответа на основе выходного значения
-        if final_answer > 0:
-            print('Ответ: Система охлаждения установлена')
-        else:
-            print('Ответ: Система охлаждения не установлена')
 
 
 # Функция для генерации случайных весов
