@@ -131,7 +131,7 @@ if __name__ == '__main__':
     # # Нормализация данных
     # X_train = scaler.fit_transform(X_train)
 
-    cp_neurons = CounterPropagation(kohonen_neurons=4, grossberg_neurons=3, epoch=100, learning_rate_a=0.7,
+    cp_neurons = CounterPropagation(kohonen_neurons=4, grossberg_neurons=3, epoch=2, learning_rate_a=0.1,
                                     learning_rate_b=0.1)
     cp_neurons.train(X_train=X_train, y_train=y_train)
     print(*X_train)
