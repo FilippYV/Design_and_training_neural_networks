@@ -90,17 +90,17 @@ class CounterPropagation:
 
 
 if __name__ == '__main__':
-    # data = pd.read_csv('../Datasets/For_RBF/iris.csv')
-    # data = data.sample(frac=1,).reset_index(drop=True)
-    # X_train = data.drop(['Species', 'Id'], axis=1)
-    # y_train = pd.DataFrame(data['Species'])
-    # y_train['Species'] = y_train['Species'].replace('Iris-setosa', 2)
-    # y_train['Species'] = y_train['Species'].replace('Iris-versicolor', 1)
-    # y_train['Species'] = y_train['Species'].replace('Iris-virginica', 0)
-    # # y_train = (y_train - y_train.min()) / (y_train.max() - y_train.min())  # нормализация
-    # X_train = X_train.to_numpy()
-    # y_train_data = y_train.to_numpy()
-    # y_train = []
+    data = pd.read_csv('../Datasets/For_RBF/iris.csv')
+    data = data.sample(frac=1,).reset_index(drop=True)
+    X_train = data.drop(['Species', 'Id'], axis=1)
+    y_train = pd.DataFrame(data['Species'])
+    y_train['Species'] = y_train['Species'].replace('Iris-setosa', 2)
+    y_train['Species'] = y_train['Species'].replace('Iris-versicolor', 1)
+    y_train['Species'] = y_train['Species'].replace('Iris-virginica', 0)
+    # y_train = (y_train - y_train.min()) / (y_train.max() - y_train.min())  # нормализация
+    X_train = X_train.to_numpy()
+    y_train_data = y_train.to_numpy()
+    y_train = []
 
     data = load_iris()
 
