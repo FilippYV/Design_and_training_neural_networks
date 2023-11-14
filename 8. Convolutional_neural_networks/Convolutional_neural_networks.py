@@ -2,8 +2,7 @@ import numpy as np
 import pandas as pd
 import random
 from sklearn.preprocessing import OneHotEncoder
-
-
+from sklearn.model_selection import train_test_split
 def get_train_data():
     data_train = pd.read_csv('../Datasets/Fashion MNIST/fashion-mnist_train.csv')
     X_train = data_train.drop(['label'], axis=1).to_numpy()
@@ -16,12 +15,19 @@ def get_train_data():
     y_train_onehot = encoder.fit_transform(y_train.reshape(-1, 1))
 
     return X_train, y_train_onehot
+#%%
+def print_accuracy(model, X_test, y_test):
+    predictions = model.predict(X_test)
+    predicted_labels = np.argmax(predictions, axis=1)
+    true_labels = np.argmax(y_test, axis=1)
 
-
+    accuracy = np.mean(predicted_labels == true_labels)
+    print(f"Final Accuracy: {accuracy * 100:.2f}%")
+    return predictions
 class CNN:
     def __init__(self, input_size, num_classes, count_convolutional_layer):
         self.input_size = input_size
-        self.num_classes = num_classes
+        self.num_classes = num_classes  # Update the initialization
         self.count_convolutional_layer = count_convolutional_layer
         self.weight_count_convolutional = self.get_weight_count_convolutional()
         self.flatten_weight = self.get_flatten_weight()
@@ -36,17 +42,23 @@ class CNN:
         return np.array(flatten_weight)
 
     def get_weight_count_convolutional(self):
-        weight_count_convolutional = [[0.1, 0.1, 0.1] for
-                                      i in range(3)]
-        return weight_count_convolutional
+        return np.random.uniform(0, 1, size=(3, 3))
 
     def flatten(self, input_data):
         return input_data.reshape(-1)
 
     def convolve2d(self, input_data):
-        height, width = input_data.shape
-        mask = np.zeros((height + 2, width + 2))
-        mask[1:height + 1, 1:height + 1] = input_data
+        channels = 1  # Default value for single channel
+        if len(input_data.shape) == 2:
+            height, width = input_data.shape
+            input_data = input_data.reshape((height, width, 1))
+        elif len(input_data.shape) == 3:
+            height, width, channels = input_data.shape
+        else:
+            raise ValueError("Input data should be either 2D or 3D")
+
+        mask = np.zeros((height + 2, width + 2, channels))
+        mask[1:height + 1, 1:width + 1, :] = input_data
         output_data = []
         for i in range(1, height + 1):
             s_array = []
@@ -54,10 +66,10 @@ class CNN:
                 summ = 0
                 for ii in range(-1, 2):
                     for jj in range(-1, 2):
-                        summ += mask[i + ii][j + jj] * self.weight_count_convolutional[ii + 1][jj + 1]
+                        summ += np.sum(mask[i + ii, j + jj, :] * self.weight_count_convolutional[ii + 1][jj + 1])
                 s_array.append(summ)
             output_data.append(s_array)
-        return output_data
+        return np.array(output_data)
 
     def max_pooling(self, data):
         leng = len(data)
@@ -77,8 +89,9 @@ class CNN:
     def fully_connected(self, flattened_output):
         return np.dot(self.flatten_weight, flattened_output)
 
-    def sigmoid(self, x):
-        return 1 / (1 + np.exp(-x))
+    def softmax(self, x):
+        exp_x = np.exp(x - np.max(x, axis=-1, keepdims=True))
+        return exp_x / np.sum(exp_x, axis=-1, keepdims=True)
 
     def train(self, X, y, epoch, learning_rate=0.01):
         for eph in range(epoch):
@@ -92,10 +105,7 @@ class CNN:
 
                 flattened_output = self.flatten(pool21_output)
                 fully_connected = self.fully_connected(flattened_output)
-                # print('fully_connected', fully_connected)
                 output = self.sigmoid(fully_connected)
-                # print('output', output)
-                # print('y[index_training_example]', y[index_training_example])
                 # Backward pass
                 loss_gradient = output - y[index_training_example]
                 fc_output_gradient = np.dot(self.flatten_weight.T, loss_gradient)
@@ -108,14 +118,42 @@ class CNN:
 
                 # Print or log the loss
                 if index_training_example % 1000 == 0:
-                    current_loss = np.mean(-y_train * np.log(output) - (1 - y_train) * np.log(1 - output))
+                    current_loss = np.mean(-y_train * np.log(self.softmax(output)) - (1 - y_train) * np.log(1 - self.softmax(output)))
                     print(f'Epoch {eph}, Example {index_training_example}, Loss: {current_loss}')
 
+    # Add this method to get the predicted probabilities using the trained model
+    def predict_probabilities(self, X):
+        predictions = []
+        for example in X:
+            conv1_output = self.convolve2d(example)
+            pool1_output = self.max_pooling(conv1_output)
 
+            conv2_output = self.convolve2d(pool1_output)
+            pool2_output = self.max_pooling(conv2_output)
+
+            flattened_output = self.flatten(pool2_output)
+            fully_connected = self.fully_connected(flattened_output)
+            output = self.softmax(fully_connected)
+            predictions.append(output)
+
+        return np.array(predictions)
+
+# ... (rest of your existing code)
+
+# Inside the main block
 if __name__ == '__main__':
     X_train, y_train = get_train_data()
+
+    # Split the data into training and testing sets
+    X_train, X_test, y_train, y_test = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
+
     simple_conv_net = CNN(
         input_size=X_train[0].shape[0],
-        num_classes=len(np.unique(y_train)),
+        num_classes=y_train.shape[1],
         count_convolutional_layer=1)
+
+    # Training
     simple_conv_net.train(X=X_train, y=y_train, epoch=1)
+
+    # Testing
+    print_accuracy(simple_conv_net, X_test, y_test)
