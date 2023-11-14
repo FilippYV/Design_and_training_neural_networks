@@ -136,8 +136,8 @@ class CNN:
 
 if __name__ == '__main__':
     X_train, y_train = get_train_data()
-    input_shape = (28, 28, 1)
     num_classes = 10
-    simple_conv_net = CNN(input_shape, num_classes)
-    simple_conv_net.train(X_train, y_train)
+    print(X_train.shape)
+    # simple_conv_net = CNN(input_size=X_train.shape, num_classes)
+    # simple_conv_net.train(X_train, y_train)
     # predictions = simple_conv_net.predict(X_test)
