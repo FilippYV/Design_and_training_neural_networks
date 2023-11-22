@@ -1,144 +1,125 @@
 import numpy as np
 
+# Создание простых данных для обучения: последовательности чисел
+sequence_length = 10
+data_size = 1000
 
-# Функция активации ReLU
-def relu(x):
-    return np.maximum(0, x)
-
-
-# Функция softmax для вычисления весов внимания
-def softmax(x, axis=-1):
-    exp_x = np.exp(x - np.max(x, axis=axis, keepdims=True))
-    return exp_x / np.sum(exp_x, axis=axis, keepdims=True)
+# Генерация данных: случайная последовательность чисел
+np.random.seed(42)
+data = np.random.randint(1, 100, size=(data_size, sequence_length))
 
 
-# Механизм внимания - scaled dot-product attention
-def scaled_dot_product_attention(Q, K, V):
-    dk = K.shape[-1]
-    # Шаг 1: Вычисление весов внимания
-    attention_scores = np.matmul(Q, K.T) / np.sqrt(dk)
-    attention_weights = softmax(attention_scores, axis=-1)
+# Нормализация данных
+data = data.astype(np.float32) / 100.0
 
-    # Шаг 2: Взвешенная сумма значений
-    attention_output = np.matmul(attention_weights, V)
-
-    return attention_output, attention_weights
+# Подготовка обучающих данных
+X = data[:, :-1]  # Входные последовательности (все числа, кроме последнего)
+y = data[:, -1]    # Выходные числа (следующее число после входной последовательности)
+print('data', data[1])
+print('X',X[1])
+print('y',y[1])
 
 
-# Многослойный перцептрон (MLP)
-def feed_forward(x, w1, b1, w2, b2):
-    h = np.dot(x, w1) + b1
-    h_relu = relu(h)
-    output = np.dot(h_relu, w2) + b2
-    return output
+# Гиперпараметры модели
+input_size = 1  # Размерность входных данных
+hidden_size = 64  # Размер скрытого слоя
+output_size = 1  # Размер выходного слоя
+learning_rate = 0.001
+num_epochs = 100
 
+# Инициализация весов
+weights = {
+    'Wq': np.random.randn(input_size, hidden_size),
+    'Wk': np.random.randn(input_size, hidden_size),
+    'Wv': np.random.randn(input_size, hidden_size),
+    'Wo': np.random.randn(hidden_size, output_size),
+    'bq': np.zeros((1, hidden_size)),
+    'bk': np.zeros((1, hidden_size)),
+    'bv': np.zeros((1, hidden_size)),
+    'bo': np.zeros((1, output_size))
+}
 
-# Полная модель трансформера
-def transformer_model(Q, K, V, w1, b1, w2, b2):
-    attention_output, attention_weights = scaled_dot_product_attention(Q, K, V)
-    mlp_output = feed_forward(attention_output, w1, b1, w2, b2)
-    return mlp_output, attention_weights
+# Функции активации и градиенты
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
 
+def sigmoid_derivative(x):
+    return x * (1 - x)
 
-# Функция обучения
-def train(X, y, learning_rate=0.01, epochs=100):
-    input_dim = X.shape[-1]
-    hidden_dim = 32
-    output_dim = y.shape[-1]
+# Обучение трансформера
+for epoch in range(num_epochs):
+    loss = 0
 
-    # Инициализация весов для механизма внимания и MLP
-    w1 = np.random.randn(hidden_dim, hidden_dim)
-    b1 = np.zeros(hidden_dim)
-    w2 = np.random.randn(hidden_dim, output_dim)
-    b2 = np.zeros(output_dim)
-
-    for epoch in range(epochs):
-        for i in range(len(X)):
-            Q = K = V = X[i]  # В упрощенной версии принимаем одинаковые Q, K, V
-            target = y[i]
-
-            # Прямое распространение
-            output, _ = transformer_model(Q, K, V, w1, b1, w2, b2)
-
-            # Вычисление ошибки и градиентов
-            loss = np.mean((output - target) ** 2)
-            d_output = 2 * (output - target)
-
-            # Обратное распространение ошибки
-            d_output_w2 = np.dot(relu(np.dot(Q, w1) + b1).T, d_output)
-            d_output_b2 = np.sum(d_output, axis=0)
-            d_output_hidden = np.dot(d_output, w2.T)
-            d_output_hidden_relu = (np.dot(Q, w1) + b1 > 0) * d_output_hidden
-            d_output_w1 = np.dot(X.T, d_output_hidden_relu)
-            d_output_b1 = np.sum(d_output_hidden_relu, axis=0)
-
-            # Обновление весов
-            w1 -= learning_rate * d_output_w1
-            b1 -= learning_rate * d_output_b1
-            w2 -= learning_rate * d_output_w2
-            b2 -= learning_rate * d_output_b2
-
-        if epoch % 10 == 0:
-            print(f'Epoch {epoch}, Loss: {loss}')
-
-    return w1, b1, w2, b2
-
-
-# Функция предсказания
-def predict(X, w1, b1, w2, b2):
-    predictions = []
     for i in range(len(X)):
-        Q = K = V = X[i]
-        output, _ = transformer_model(Q, K, V, w1, b1, w2, b2)
-        predictions.append(output)
-    return np.array(predictions)
+        # Прямое распространение (forward pass)
+        input_seq = X[i].reshape(-1, 1)
+        target = y[i]
 
+        # Attention
+        q = np.dot(input_seq, weights['Wq']) + weights['bq']
+        k = np.dot(input_seq, weights['Wk']) + weights['bk']
+        v = np.dot(input_seq, weights['Wv']) + weights['bv']
 
-def prepare_data(X):
-    # Создание матрицы для представления слов в последовательностях
-    embedding_dim = 50  # Размерность эмбеддинга
-    vocab_size = len(set(np.concatenate(X)))  # Размер словаря
-    embeddings = np.random.randn(vocab_size, embedding_dim)
+        scores = np.dot(q, k.T) / np.sqrt(hidden_size)
+        attention_weights = np.dot(scores, v)
 
-    # Преобразование слов в эмбеддинги
-    embedded_X = [embeddings[sequence] for sequence in X if sequence < vocab_size]
+        # Attention Layer
+        attention_output = np.sum(attention_weights, axis=0, keepdims=True)
 
-    return np.array(embedded_X)
+        # Output Layer
+        output = np.dot(attention_output, weights['Wo']) + weights['bo']
+        prediction = sigmoid(output)
 
+        # Loss
+        loss += np.square(prediction - target)
 
+        # Обратное распространение (backpropagation) для обновления весов
+        d_output = 2 * (prediction - target) * sigmoid_derivative(prediction)
 
-text_data = ["я", "люблю", "гулять", "по", "парку", "собакой"]
-word_to_index = {word: idx for idx, word in enumerate(set(text_data))}
-index_to_word = {idx: word for word, idx in word_to_index.items()}
+        # Обратное распространение attention
+        d_attention_output = np.dot(d_output, weights['Wo'].T)
+        d_attention_weights = d_attention_output * np.ones_like(attention_weights) / len(attention_weights)
 
-sequence_length = 5
-input_sequences = []
-target_sequences = []
+        d_v = np.dot(scores.T, d_attention_weights)
+        d_scores = np.dot(d_attention_weights, v.T)
+        d_k = np.dot(d_scores.T, q)  # Используйте транспонированную матрицу d_scores для умножения на q
+        d_q = np.dot(d_scores.T, k)  # Используйте транспонированную матрицу d_scores для умножения на k
 
-for i in range(len(text_data) - sequence_length):
-    input_seq = text_data[i:i + sequence_length]
-    target_seq = text_data[i + 1:i + sequence_length + 1]
+        d_weights = {
+            'Wo': np.dot(attention_output.T, d_output),
+            'bo': np.sum(d_output, axis=0, keepdims=True),
+            'Wv': np.dot(input_seq.T, d_v),
+            'bv': np.sum(d_v, axis=0, keepdims=True),
+            'Wk': np.dot(input_seq.T, d_k),
+            'bk': np.sum(d_k, axis=0, keepdims=True),
+            'Wq': np.dot(input_seq.T, d_q),
+            'bq': np.sum(d_q, axis=0, keepdims=True)
+        }
 
-    input_sequences.append([word_to_index[word] for word in input_seq])
-    target_sequences.append([word_to_index[word] for word in target_seq])
+        # Обновление весов
+        for weight_name in weights:
+            weights[weight_name] -= learning_rate * d_weights.get(weight_name, 0)
 
-X = np.array(input_sequences)
-y = np.array(target_sequences)
+    if epoch % 10 == 0:
+        print(f'Epoch {epoch}, Loss: {loss/len(X)}')
 
-# Подготовка данных в матрицы для Q, K, V
-embedded_X = prepare_data(X)
-Q = K = V = embedded_X
+# Предсказание для новой последовательности чисел
+test_sequence = np.array([[0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.1]])
+predicted_value = None
 
-# Обучение модели
-trained_weights = train(Q, y, learning_rate=0.01, epochs=100)
+# Прямое распространение по обученным весам
+for i in range(len(test_sequence)):
+    input_seq = test_sequence[i].reshape(-1, 1)
 
-# Предсказание
-predictions = predict(Q, *trained_weights)
+    q = np.dot(input_seq, weights['Wq']) + weights['bq']
+    k = np.dot(input_seq, weights['Wk']) + weights['bk']
+    v = np.dot(input_seq, weights['Wv']) + weights['bv']
 
-# Вывод результатов
-for i, pred in enumerate(predictions):
-    input_words = ' '.join([index_to_word[idx] for idx in X[i]])
-    target_words = ' '.join([index_to_word[idx] for idx in y[i]])
-    pred_words = ' '.join([index_to_word[np.argmax(p)] for p in pred])
+    scores = np.dot(q, k.T) / np.sqrt(hidden_size)
+    attention_weights = np.dot(scores, v)
 
-    print(f"Input: {input_words} | Target: {target_words} | Prediction: {pred_words}")
+    attention_output = np.sum(attention_weights, axis=0, keepdims=True)
+    output = np.dot(attention_output, weights['Wo']) + weights['bo']
+    predicted_value = sigmoid(output)
+
+print(f'Predicted value: {predicted_value}')
