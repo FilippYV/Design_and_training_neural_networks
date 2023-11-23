@@ -66,4 +66,5 @@ bitcoin_prices = np.array([100, 108, 110, 115, 105, 112, 120, 125, 135, 140])
 rnn.train(bitcoin_prices)
 
 next_price = rnn.predict([140, 145, 155, 160])
+print(f'Input data: [140, 145, 155, 160]')
 print(f'Predicted next Bitcoin price: {next_price}')

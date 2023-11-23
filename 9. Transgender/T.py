@@ -1,24 +1,32 @@
 import numpy as np
+import pandas as pd
 
-# Создание простых данных для обучения: последовательности чисел
-sequence_length = 10
-data_size = 1000
+data = pd.read_csv('../Datasets/Daily-minimum-temperatures/daily-minimum-temperatures-in-me.csv')
+data = data.drop('Date', axis=1).to_numpy()
+data = data.flatten()
+new_data = []
+for i in data:
+    new_data.append(float(i.replace('?', '')))
 
-# Генерация данных: случайная последовательность чисел
-np.random.seed(42)
-data = np.random.randint(1, 100, size=(data_size, sequence_length))
+maximum = max(new_data)
 
+print('maximum', maximum)
 
 # Нормализация данных
-data = data.astype(np.float32) / 100.0
+new_data = np.array(new_data) / maximum
+
+# Разделение на подмассивы по 10 элементов
+data = np.array_split(new_data, len(new_data) / 10)
+del data[-1]
+print('data', data, '\n')
 
 # Подготовка обучающих данных
+data = np.array(data)
 X = data[:, :-1]  # Входные последовательности (все числа, кроме последнего)
-y = data[:, -1]    # Выходные числа (следующее число после входной последовательности)
+y = data[:, -1]  # Выходные числа (следующее число после входной последовательности)
 print('data', data[1])
-print('X',X[1])
-print('y',y[1])
-
+print('X', X[1])
+print('y', y[1])
 
 # Гиперпараметры модели
 input_size = 1  # Размерность входных данных
@@ -39,12 +47,15 @@ weights = {
     'bo': np.zeros((1, output_size))
 }
 
+
 # Функции активации и градиенты
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
+
 def sigmoid_derivative(x):
     return x * (1 - x)
+
 
 # Обучение трансформера
 for epoch in range(num_epochs):
@@ -101,10 +112,12 @@ for epoch in range(num_epochs):
             weights[weight_name] -= learning_rate * d_weights.get(weight_name, 0)
 
     if epoch % 10 == 0:
-        print(f'Epoch {epoch}, Loss: {loss/len(X)}')
+        print(f'Epoch {epoch}, Loss: {loss / len(X)}')
 
 # Предсказание для новой последовательности чисел
-test_sequence = np.array([[0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.1]])
+# 10.7, 8.2, 6.1, 4.5, 6.1, 9.8, 9.7, 8.2, 8.4, 8.5
+test_sequence = np.array([10.7, 8.2, 6.1, 4.5, 6.1, 9.8, 9.7, 8.2, 8.4])
+test_sequence = test_sequence / maximum
 predicted_value = None
 
 # Прямое распространение по обученным весам
@@ -121,5 +134,6 @@ for i in range(len(test_sequence)):
     attention_output = np.sum(attention_weights, axis=0, keepdims=True)
     output = np.dot(attention_output, weights['Wo']) + weights['bo']
     predicted_value = sigmoid(output)
-
+predicted_value = predicted_value[0][0]
 print(f'Predicted value: {predicted_value}')
+print(f'Predicted value: {predicted_value * maximum}')

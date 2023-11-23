@@ -128,7 +128,7 @@ class CounterPropagation:
 
 if __name__ == '__main__':
     # %%
-    data = pd.read_csv('../Datasets/iris/iris.csv')
+    data = pd.read_csv('../Datasets/Iris/iris.csv')
     data = data.sample(frac=1, random_state=12).reset_index(drop=True)
     X_train = data.drop(['Species', 'Id'], axis=1)
     y_train = pd.DataFrame(data['Species'])
@@ -143,12 +143,12 @@ if __name__ == '__main__':
     norm_value = get_norm_value(input_vector=X_train)
     X_train = normalize_data(input_vector=X_train, norm=norm_value)
 
-    X_test = pd.read_csv('../Datasets/iris/test_iris.csv')
+    X_test = pd.read_csv('../Datasets/Iris/test_iris.csv')
     X_test = X_test.drop(['species', 'Unnamed: 0'], axis=1)
     X_test = X_test.to_numpy()
     X_test = normalize_data(input_vector=X_test, norm=norm_value)
 
-    y_test = pd.read_csv('../Datasets/iris/test_iris.csv')
+    y_test = pd.read_csv('../Datasets/Iris/test_iris.csv')
     y_test = y_test.drop(['Unnamed: 0', 'petal length', 'petal width', 'sepal length', 'sepal width'], axis=1)
     y_test['species'] = pd.factorize(y_test['species'])[0]
     y_test = y_test.to_numpy()
