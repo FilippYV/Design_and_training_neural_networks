@@ -66,7 +66,6 @@ def out_confusion_matrix(y_true, y_pred):
     fig = px.imshow(confusion_matrix(labels, y_pred), text_auto=True)
     fig.update_layout(xaxis_title='Цель', yaxis_title='Прогноз')
     fig.show()
-    input()
 
 
 def get_data_from_csv(filename):
