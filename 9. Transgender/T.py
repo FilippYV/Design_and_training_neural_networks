@@ -66,7 +66,6 @@ for epoch in range(num_epochs):
         input_seq = X[i].reshape(-1, 1)
         target = y[i]
 
-        # Attention
         q = np.dot(input_seq, weights['Wq']) + weights['bq']
         k = np.dot(input_seq, weights['Wk']) + weights['bk']
         v = np.dot(input_seq, weights['Wv']) + weights['bv']
@@ -74,20 +73,15 @@ for epoch in range(num_epochs):
         scores = np.dot(q, k.T) / np.sqrt(hidden_size)
         attention_weights = np.dot(scores, v)
 
-        # Attention Layer
         attention_output = np.sum(attention_weights, axis=0, keepdims=True)
 
-        # Output Layer
         output = np.dot(attention_output, weights['Wo']) + weights['bo']
         prediction = sigmoid(output)
 
-        # Loss
         loss += np.square(prediction - target)
 
-        # Обратное распространение (backpropagation) для обновления весов
         d_output = 2 * (prediction - target) * sigmoid_derivative(prediction)
 
-        # Обратное распространение attention
         d_attention_output = np.dot(d_output, weights['Wo'].T)
         d_attention_weights = d_attention_output * np.ones_like(attention_weights) / len(attention_weights)
 
